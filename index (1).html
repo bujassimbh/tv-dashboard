@@ -1,0 +1,1867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discover Islam - TV Display</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0f1a 0%, #0d1117 50%, #0a0f1a 100%);
+            min-height: 100vh;
+            color: white;
+            overflow: hidden;
+        }
+
+        /* ==================== TV Container ==================== */
+        .tv-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* ==================== Header Bar ==================== */
+        .tv-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 80px;
+            background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 40px;
+            z-index: 100;
+        }
+
+        .tv-logo {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .tv-logo-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8em;
+        }
+
+        .tv-logo-text h1 {
+            font-size: 1.5em;
+            font-weight: 800;
+            background: linear-gradient(135deg, #10b981, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .tv-logo-text p {
+            font-size: 0.75em;
+            color: #64748b;
+        }
+
+        .tv-header-right {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(239, 68, 68, 0.2);
+            padding: 8px 16px;
+            border-radius: 30px;
+            border: 1px solid rgba(239, 68, 68, 0.5);
+        }
+
+        .live-dot {
+            width: 12px;
+            height: 12px;
+            background: #ef4444;
+            border-radius: 50%;
+            animation: livePulse 1.5s infinite;
+        }
+
+        @keyframes livePulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        .live-indicator span {
+            color: #ef4444;
+            font-weight: 700;
+            font-size: 0.9em;
+            letter-spacing: 2px;
+        }
+
+        .datetime {
+            text-align: right;
+        }
+
+        .datetime .time {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: white;
+        }
+
+        .datetime .date {
+            font-size: 0.85em;
+            color: #64748b;
+        }
+
+        /* ==================== Progress Bar ==================== */
+        .progress-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            z-index: 100;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #06b6d4);
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        /* ==================== Slides Container ==================== */
+        .slides-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transform: scale(0.95);
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+            padding: 100px 60px 60px;
+        }
+
+        .slide.active {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
+        }
+
+        /* ==================== Slide 1: Main Stats ==================== */
+        .slide-main-stats {
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        .main-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+            width: 100%;
+            max-width: 1600px;
+        }
+
+        .main-stat-card {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(6, 182, 212, 0.05));
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 24px;
+            padding: 50px 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .main-stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #10b981, #06b6d4);
+        }
+
+        .main-stat-card .icon {
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+
+        .main-stat-card .value {
+            font-size: 5em;
+            font-weight: 900;
+            background: linear-gradient(135deg, #10b981, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+            margin-bottom: 10px;
+        }
+
+        .main-stat-card .label {
+            font-size: 1.3em;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+
+        .main-stat-card.highlight {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1));
+            border-color: rgba(16, 185, 129, 0.5);
+            transform: scale(1.05);
+        }
+
+        .main-stat-card.highlight .value {
+            font-size: 6em;
+        }
+
+        .slide-title {
+            font-size: 2em;
+            font-weight: 700;
+            color: #64748b;
+            text-align: center;
+        }
+
+        /* ==================== Slide 2: World Map ==================== */
+        .slide-map {
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .map-wrapper {
+            width: 100%;
+            max-width: 1400px;
+            height: 70vh;
+            border-radius: 24px;
+            overflow: hidden;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        #tvLeafletMap {
+            width: 100%;
+            height: 100%;
+            background: #0d1117;
+        }
+
+        .map-stats-row {
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+        }
+
+        .map-stat-box {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(255,255,255,0.05);
+            padding: 16px 30px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .map-stat-box .icon {
+            font-size: 2em;
+        }
+
+        .map-stat-box .info strong {
+            font-size: 1.8em;
+            font-weight: 800;
+            color: #10b981;
+        }
+
+        .map-stat-box .info span {
+            color: #94a3b8;
+            font-size: 1em;
+        }
+
+        /* ==================== Slide 3: Top Countries ==================== */
+        .slide-top-countries {
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        .countries-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 30px;
+            width: 100%;
+            max-width: 1600px;
+        }
+
+        .country-card {
+            background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 24px;
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .country-card.rank-1 {
+            background: linear-gradient(180deg, rgba(255, 215, 0, 0.15), rgba(255, 215, 0, 0.05));
+            border-color: rgba(255, 215, 0, 0.4);
+            transform: scale(1.08);
+        }
+
+        .country-card.rank-2 {
+            background: linear-gradient(180deg, rgba(192, 192, 192, 0.15), rgba(192, 192, 192, 0.05));
+            border-color: rgba(192, 192, 192, 0.4);
+        }
+
+        .country-card.rank-3 {
+            background: linear-gradient(180deg, rgba(205, 127, 50, 0.15), rgba(205, 127, 50, 0.05));
+            border-color: rgba(205, 127, 50, 0.4);
+        }
+
+        .country-rank {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.2em;
+            border: 3px solid #0d1117;
+        }
+
+        .country-card.rank-1 .country-rank { background: linear-gradient(135deg, #ffd700, #f59e0b); }
+        .country-card.rank-2 .country-rank { background: linear-gradient(135deg, #c0c0c0, #94a3b8); }
+        .country-card.rank-3 .country-rank { background: linear-gradient(135deg, #cd7f32, #b45309); }
+
+        .country-flag {
+            font-size: 4em;
+            margin-bottom: 15px;
+            margin-top: 10px;
+        }
+
+        .country-name {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        .country-shahadahs {
+            font-size: 2.5em;
+            font-weight: 900;
+            color: #10b981;
+        }
+
+        .country-label {
+            font-size: 0.85em;
+            color: #64748b;
+        }
+
+        /* ==================== Slide 4: Today Stats ==================== */
+        .slide-today {
+            flex-direction: column;
+            gap: 50px;
+        }
+
+        .today-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 40px;
+            width: 100%;
+            max-width: 1400px;
+        }
+
+        .today-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .today-card .period-icon {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+        }
+
+        .today-card .period-label {
+            font-size: 1em;
+            color: #64748b;
+            margin-bottom: 10px;
+        }
+
+        .today-card .period-value {
+            font-size: 3.5em;
+            font-weight: 900;
+            color: #10b981;
+        }
+
+        .today-card.highlight {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1));
+            border-color: rgba(16, 185, 129, 0.5);
+        }
+
+        /* ==================== Slide 5: User Journey ==================== */
+        .slide-journey {
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        .journey-funnel {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            width: 100%;
+            max-width: 1400px;
+        }
+
+        .journey-step {
+            text-align: center;
+        }
+
+        .step-circle {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .step-circle.conversations {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            box-shadow: 0 0 60px rgba(59, 130, 246, 0.4);
+        }
+
+        .step-circle.details {
+            background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+            box-shadow: 0 0 60px rgba(139, 92, 246, 0.4);
+        }
+
+        .step-circle.shahadahs {
+            background: linear-gradient(135deg, #10b981, #059669);
+            box-shadow: 0 0 60px rgba(16, 185, 129, 0.4);
+            width: 220px;
+            height: 220px;
+        }
+
+        .step-number {
+            font-size: 3em;
+            font-weight: 900;
+            color: white;
+        }
+
+        .step-label {
+            font-size: 1.2em;
+            color: white;
+            font-weight: 600;
+        }
+
+        .journey-arrow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .arrow-line {
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.3), rgba(16, 185, 129, 0.8));
+            border-radius: 2px;
+        }
+
+        .conversion-rate {
+            background: rgba(16, 185, 129, 0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 1.2em;
+            font-weight: 700;
+            color: #10b981;
+        }
+
+        /* ==================== Slide 6: Achievements ==================== */
+        .slide-achievements {
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        .achievements-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+            width: 100%;
+            max-width: 1400px;
+        }
+
+        .achievement-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 24px;
+            padding: 40px;
+            display: flex;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .achievement-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5em;
+            flex-shrink: 0;
+        }
+
+        .achievement-card.gold .achievement-icon {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.3), rgba(255, 215, 0, 0.1));
+        }
+
+        .achievement-card.record .achievement-icon {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(239, 68, 68, 0.1));
+        }
+
+        .achievement-card.growth .achievement-icon {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(16, 185, 129, 0.1));
+        }
+
+        .achievement-content h3 {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 8px;
+        }
+
+        .achievement-content p {
+            font-size: 1em;
+            color: #94a3b8;
+            margin-bottom: 5px;
+        }
+
+        .achievement-content .date {
+            font-size: 0.85em;
+            color: #64748b;
+        }
+
+        /* ==================== Slide 7: Live Feed ==================== */
+        .slide-live-feed {
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .live-feed-container {
+            width: 100%;
+            max-width: 1200px;
+            height: 60vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .live-feed-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            animation: scrollUp 15s linear infinite;
+        }
+
+        @keyframes scrollUp {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-50%); }
+        }
+
+        .feed-item {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 16px;
+            padding: 25px 30px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .feed-item.new {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1));
+            border-color: rgba(16, 185, 129, 0.5);
+            animation: newPulse 2s infinite;
+        }
+
+        @keyframes newPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            50% { box-shadow: 0 0 20px 5px rgba(16, 185, 129, 0.2); }
+        }
+
+        .feed-flag {
+            font-size: 3em;
+        }
+
+        .feed-content {
+            flex: 1;
+        }
+
+        .feed-content h4 {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 5px;
+        }
+
+        .feed-content p {
+            color: #94a3b8;
+            font-size: 1em;
+        }
+
+        .feed-time {
+            font-size: 1em;
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        /* ==================== Slide Navigation Dots ==================== */
+        .slide-dots {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            z-index: 100;
+        }
+
+        .slide-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .slide-dot.active {
+            background: #10b981;
+            transform: scale(1.3);
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
+        }
+
+        /* ==================== New Shahadah Alert ==================== */
+        .shahadah-alert {
+            position: fixed;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-200%);
+            background: linear-gradient(135deg, #10b981, #059669);
+            padding: 20px 50px;
+            border-radius: 100px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            z-index: 200;
+            box-shadow: 0 10px 50px rgba(16, 185, 129, 0.5);
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .shahadah-alert.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .shahadah-alert .alert-icon {
+            font-size: 2em;
+        }
+
+        .shahadah-alert .alert-text {
+            font-size: 1.5em;
+            font-weight: 700;
+        }
+
+        /* ==================== Leaflet Popup ==================== */
+        .leaflet-popup-content-wrapper {
+            background: rgba(15, 23, 42, 0.95) !important;
+            border: 1px solid rgba(16, 185, 129, 0.4) !important;
+            border-radius: 12px !important;
+        }
+
+        .leaflet-popup-tip {
+            background: rgba(15, 23, 42, 0.95) !important;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* ==================== Slide 8: Monthly Trend ==================== */
+        .slide-trend {
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .trend-container {
+            width: 100%;
+            max-width: 1200px;
+            height: 50vh;
+            background: rgba(255,255,255,0.03);
+            border-radius: 24px;
+            padding: 30px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .trend-summary {
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+        }
+
+        .trend-stat {
+            text-align: center;
+        }
+
+        .trend-label {
+            display: block;
+            color: #64748b;
+            font-size: 1em;
+            margin-bottom: 8px;
+        }
+
+        .trend-value {
+            font-size: 2em;
+            font-weight: 800;
+            color: #10b981;
+        }
+
+        .trend-value.positive {
+            color: #10b981;
+        }
+
+        /* ==================== Slide 9: Country Spotlight ==================== */
+        .slide-spotlight {
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .spotlight-container {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spotlight-flag {
+            font-size: 8em;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+
+        .spotlight-name {
+            font-size: 3.5em;
+            font-weight: 900;
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        .spotlight-rank {
+            font-size: 1.5em;
+            color: #fbbf24;
+            font-weight: 600;
+            margin-bottom: 40px;
+        }
+
+        .spotlight-stats {
+            display: flex;
+            justify-content: center;
+            gap: 50px;
+            flex-wrap: wrap;
+        }
+
+        .spotlight-stat {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 20px;
+            padding: 30px 50px;
+            text-align: center;
+        }
+
+        .spotlight-stat-value {
+            font-size: 3em;
+            font-weight: 900;
+            color: #10b981;
+            margin-bottom: 10px;
+        }
+
+        .spotlight-stat-label {
+            font-size: 1em;
+            color: #94a3b8;
+        }
+
+        /* ==================== Slide 10: Performance Comparison ==================== */
+        .slide-comparison {
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        .comparison-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
+            width: 100%;
+            max-width: 1400px;
+        }
+
+        .comparison-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 24px;
+            padding: 40px 30px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .comparison-card.today-compare {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.05));
+            border-color: rgba(16, 185, 129, 0.4);
+        }
+
+        .compare-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .compare-period {
+            font-size: 1.2em;
+            color: #94a3b8;
+            margin-bottom: 15px;
+        }
+
+        .compare-value {
+            font-size: 4em;
+            font-weight: 900;
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        .comparison-card.today-compare .compare-value {
+            color: #10b981;
+        }
+
+        .compare-change {
+            font-size: 1em;
+            color: #64748b;
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        .compare-change.positive {
+            color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .compare-change.negative {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="tv-container">
+        <!-- Header -->
+        <header class="tv-header">
+            <div class="tv-logo">
+                <img src="https://i.ibb.co/4RFJyzv/logo-bennfir.png" alt="Discover Islam" class="logo-img" style="height: 60px; object-fit: contain;">
+                <div class="tv-logo-text">
+                    <h1>AIMAN Chatbot Summary</h1>
+                    <p>by Discover Islam Society - Bahrain</p>
+                </div>
+            </div>
+            <div class="tv-header-right">
+                <div class="live-indicator">
+                    <div class="live-dot"></div>
+                    <span>LIVE</span>
+                </div>
+                <div class="datetime">
+                    <div class="time" id="currentTime">00:00:00</div>
+                    <div class="date" id="currentDate">Loading...</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- New Shahadah Alert -->
+        <div class="shahadah-alert" id="shahadahAlert">
+            <span class="alert-icon">🎉</span>
+            <span class="alert-text" id="alertText">New Shahadah from Kenya! Allahu Akbar!</span>
+        </div>
+
+        <!-- Slides -->
+        <div class="slides-container">
+            <!-- Slide 1: Main Stats -->
+            <div class="slide slide-main-stats active" data-duration="10">
+                <h2 class="slide-title">📊 All-Time Statistics</h2>
+                <div class="main-stats-grid">
+                    <div class="main-stat-card">
+                        <div class="icon">💬</div>
+                        <div class="value" id="statConversations">146.2K</div>
+                        <div class="label">Total Conversations</div>
+                    </div>
+                    <div class="main-stat-card highlight">
+                        <div class="icon">☪️</div>
+                        <div class="value" id="statShahadahs">4,668</div>
+                        <div class="label">Total Shahadahs</div>
+                    </div>
+                    <div class="main-stat-card">
+                        <div class="icon">📋</div>
+                        <div class="value" id="statDetails">12,626</div>
+                        <div class="label">Details Given</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 2: World Map -->
+            <div class="slide slide-map" data-duration="15">
+                <h2 class="slide-title">🗺️ Global Dawah Map</h2>
+                <div class="map-wrapper">
+                    <div id="tvLeafletMap"></div>
+                </div>
+                <div class="map-stats-row">
+                    <div class="map-stat-box">
+                        <span class="icon">🌍</span>
+                        <div class="info">
+                            <strong>23+</strong> <span>Countries</span>
+                        </div>
+                    </div>
+                    <div class="map-stat-box">
+                        <span class="icon">🌏</span>
+                        <div class="info">
+                            <strong>4</strong> <span>Continents</span>
+                        </div>
+                    </div>
+                    <div class="map-stat-box">
+                        <span class="icon">☪️</span>
+                        <div class="info">
+                            <strong>4,668</strong> <span>Total Shahadahs</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 3: Top Countries -->
+            <div class="slide slide-top-countries" data-duration="10">
+                <h2 class="slide-title">🏆 Top 5 Countries</h2>
+                <div class="countries-grid">
+                    <div class="country-card rank-1">
+                        <div class="country-rank">1</div>
+                        <div class="country-flag">🇰🇪</div>
+                        <div class="country-name">Kenya</div>
+                        <div class="country-shahadahs">1,504</div>
+                        <div class="country-label">Shahadahs</div>
+                    </div>
+                    <div class="country-card rank-2">
+                        <div class="country-rank">2</div>
+                        <div class="country-flag">🇺🇬</div>
+                        <div class="country-name">Uganda</div>
+                        <div class="country-shahadahs">956</div>
+                        <div class="country-label">Shahadahs</div>
+                    </div>
+                    <div class="country-card rank-3">
+                        <div class="country-rank">3</div>
+                        <div class="country-flag">🇲🇼</div>
+                        <div class="country-name">Malawi</div>
+                        <div class="country-shahadahs">483</div>
+                        <div class="country-label">Shahadahs</div>
+                    </div>
+                    <div class="country-card">
+                        <div class="country-rank">4</div>
+                        <div class="country-flag">🇿🇼</div>
+                        <div class="country-name">Zimbabwe</div>
+                        <div class="country-shahadahs">405</div>
+                        <div class="country-label">Shahadahs</div>
+                    </div>
+                    <div class="country-card">
+                        <div class="country-rank">5</div>
+                        <div class="country-flag">🇱🇰</div>
+                        <div class="country-name">Sri Lanka</div>
+                        <div class="country-shahadahs">289</div>
+                        <div class="country-label">Shahadahs</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 4: Today/Period Stats -->
+            <div class="slide slide-today" data-duration="10">
+                <h2 class="slide-title">📅 Period Statistics</h2>
+                <div class="today-grid">
+                    <div class="today-card highlight">
+                        <div class="period-icon">☀️</div>
+                        <div class="period-label">Today</div>
+                        <div class="period-value" id="statToday">12</div>
+                    </div>
+                    <div class="today-card">
+                        <div class="period-icon">📅</div>
+                        <div class="period-label">Yesterday</div>
+                        <div class="period-value">8</div>
+                    </div>
+                    <div class="today-card">
+                        <div class="period-icon">📆</div>
+                        <div class="period-label">This Week</div>
+                        <div class="period-value">67</div>
+                    </div>
+                    <div class="today-card">
+                        <div class="period-icon">🗓️</div>
+                        <div class="period-label">This Month</div>
+                        <div class="period-value">284</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 5: User Journey -->
+            <div class="slide slide-journey" data-duration="10">
+                <h2 class="slide-title">🚀 User Journey - Path to Shahadah</h2>
+                <div class="journey-funnel">
+                    <div class="journey-step">
+                        <div class="step-circle conversations">
+                            <span class="step-number">146.2K</span>
+                        </div>
+                        <span class="step-label">💬 Conversations</span>
+                    </div>
+                    <div class="journey-arrow">
+                        <div class="arrow-line"></div>
+                        <span class="conversion-rate">8.6%</span>
+                    </div>
+                    <div class="journey-step">
+                        <div class="step-circle details">
+                            <span class="step-number">12,626</span>
+                        </div>
+                        <span class="step-label">📋 Details Given</span>
+                    </div>
+                    <div class="journey-arrow">
+                        <div class="arrow-line"></div>
+                        <span class="conversion-rate">37%</span>
+                    </div>
+                    <div class="journey-step">
+                        <div class="step-circle shahadahs">
+                            <span class="step-number">4,668</span>
+                        </div>
+                        <span class="step-label">☪️ Shahadahs</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 6: Achievements -->
+            <div class="slide slide-achievements" data-duration="10">
+                <h2 class="slide-title">🏆 Achievements & Milestones</h2>
+                <div class="achievements-grid">
+                    <div class="achievement-card gold">
+                        <div class="achievement-icon">👑</div>
+                        <div class="achievement-content">
+                            <h3>Top Performer</h3>
+                            <p>Kenya reached 1,500+ Shahadahs!</p>
+                            <span class="date">December 2025</span>
+                        </div>
+                    </div>
+                    <div class="achievement-card record">
+                        <div class="achievement-icon">🔥</div>
+                        <div class="achievement-content">
+                            <h3>Best Day Record</h3>
+                            <p>26 Shahadahs in a single day</p>
+                            <span class="date">Dec 22, 2025</span>
+                        </div>
+                    </div>
+                    <div class="achievement-card growth">
+                        <div class="achievement-icon">📈</div>
+                        <div class="achievement-content">
+                            <h3>Yearly Growth</h3>
+                            <p>+4,668 Shahadahs in 2025</p>
+                            <span class="date">Year to Date</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 7: Live Feed -->
+            <div class="slide slide-live-feed" data-duration="15">
+                <h2 class="slide-title">🔴 Recent Shahadahs - Live Feed</h2>
+                <div class="live-feed-container">
+                    <div class="live-feed-list" id="liveFeedList">
+                        <div class="feed-item new">
+                            <span class="feed-flag">🇰🇪</span>
+                            <div class="feed-content">
+                                <h4>New Shahadah from Kenya</h4>
+                                <p>Alhamdulillah! Another soul guided to Islam</p>
+                            </div>
+                            <span class="feed-time">2 min ago</span>
+                        </div>
+                        <div class="feed-item">
+                            <span class="feed-flag">🇺🇬</span>
+                            <div class="feed-content">
+                                <h4>New Shahadah from Uganda</h4>
+                                <p>Allahu Akbar! Welcome to Islam</p>
+                            </div>
+                            <span class="feed-time">15 min ago</span>
+                        </div>
+                        <div class="feed-item">
+                            <span class="feed-flag">🇱🇰</span>
+                            <div class="feed-content">
+                                <h4>New Shahadah from Sri Lanka</h4>
+                                <p>MashaAllah! A beautiful journey begins</p>
+                            </div>
+                            <span class="feed-time">32 min ago</span>
+                        </div>
+                        <div class="feed-item">
+                            <span class="feed-flag">🇲🇼</span>
+                            <div class="feed-content">
+                                <h4>New Shahadah from Malawi</h4>
+                                <p>SubhanAllah! Another guided heart</p>
+                            </div>
+                            <span class="feed-time">1 hour ago</span>
+                        </div>
+                        <div class="feed-item">
+                            <span class="feed-flag">🇪🇹</span>
+                            <div class="feed-content">
+                                <h4>New Shahadah from Ethiopia</h4>
+                                <p>Alhamdulillah! The light of Islam spreads</p>
+                            </div>
+                            <span class="feed-time">2 hours ago</span>
+                        </div>
+                        <!-- Duplicate for seamless scroll -->
+                        <div class="feed-item new">
+                            <span class="feed-flag">🇰🇪</span>
+                            <div class="feed-content">
+                                <h4>New Shahadah from Kenya</h4>
+                                <p>Alhamdulillah! Another soul guided to Islam</p>
+                            </div>
+                            <span class="feed-time">2 min ago</span>
+                        </div>
+                        <div class="feed-item">
+                            <span class="feed-flag">🇺🇬</span>
+                            <div class="feed-content">
+                                <h4>New Shahadah from Uganda</h4>
+                                <p>Allahu Akbar! Welcome to Islam</p>
+                            </div>
+                            <span class="feed-time">15 min ago</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 8: Monthly Trend Chart -->
+            <div class="slide slide-trend" data-duration="12">
+                <h2 class="slide-title">📈 Monthly Shahadah Trend</h2>
+                <div class="trend-container">
+                    <canvas id="trendChart"></canvas>
+                </div>
+                <div class="trend-summary">
+                    <div class="trend-stat">
+                        <span class="trend-label">Best Month</span>
+                        <span class="trend-value" id="bestMonth">December</span>
+                    </div>
+                    <div class="trend-stat">
+                        <span class="trend-label">Average/Month</span>
+                        <span class="trend-value" id="avgMonth">389</span>
+                    </div>
+                    <div class="trend-stat">
+                        <span class="trend-label">Growth</span>
+                        <span class="trend-value positive" id="growthPercent">+45%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 9: Country Spotlight -->
+            <div class="slide slide-spotlight" data-duration="10">
+                <h2 class="slide-title">🌟 Country Spotlight</h2>
+                <div class="spotlight-container">
+                    <div class="spotlight-flag" id="spotlightFlag">🇰🇪</div>
+                    <div class="spotlight-name" id="spotlightName">Kenya</div>
+                    <div class="spotlight-rank" id="spotlightRank">#1 Top Performer</div>
+                    <div class="spotlight-stats">
+                        <div class="spotlight-stat">
+                            <div class="spotlight-stat-value" id="spotlightShahadahs">1,504</div>
+                            <div class="spotlight-stat-label">Total Shahadahs</div>
+                        </div>
+                        <div class="spotlight-stat">
+                            <div class="spotlight-stat-value" id="spotlightDetails">2,747</div>
+                            <div class="spotlight-stat-label">Details Given</div>
+                        </div>
+                        <div class="spotlight-stat">
+                            <div class="spotlight-stat-value" id="spotlightConversations">29.1K</div>
+                            <div class="spotlight-stat-label">Conversations</div>
+                        </div>
+                        <div class="spotlight-stat">
+                            <div class="spotlight-stat-value" id="spotlightConversion">54.8%</div>
+                            <div class="spotlight-stat-label">Conversion Rate</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 10: Performance Comparison -->
+            <div class="slide slide-comparison" data-duration="10">
+                <h2 class="slide-title">📊 Performance Comparison</h2>
+                <div class="comparison-container">
+                    <div class="comparison-card today-compare">
+                        <div class="compare-icon">☀️</div>
+                        <div class="compare-period">Today</div>
+                        <div class="compare-value" id="compareToday">12</div>
+                        <div class="compare-change positive" id="compareTodayChange">+50% vs yesterday</div>
+                    </div>
+                    <div class="comparison-card yesterday-compare">
+                        <div class="compare-icon">📅</div>
+                        <div class="compare-period">Yesterday</div>
+                        <div class="compare-value" id="compareYesterday">8</div>
+                        <div class="compare-change" id="compareYesterdayChange">baseline</div>
+                    </div>
+                    <div class="comparison-card week-compare">
+                        <div class="compare-icon">📆</div>
+                        <div class="compare-period">This Week</div>
+                        <div class="compare-value" id="compareWeek">67</div>
+                        <div class="compare-change positive" id="compareWeekChange">+23% vs last week</div>
+                    </div>
+                    <div class="comparison-card month-compare">
+                        <div class="compare-icon">🗓️</div>
+                        <div class="compare-period">This Month</div>
+                        <div class="compare-value" id="compareMonth">284</div>
+                        <div class="compare-change positive" id="compareMonthChange">+15% vs last month</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Dots -->
+        <div class="slide-dots" id="slideDots"></div>
+
+        <!-- Progress Bar -->
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== Configuration ====================
+        const API_KEY = 'AIzaSyATMBv-R30hrumeGvGw8u5hQefvpNLZa-4';
+        const SPREADSHEET_ID = '1eOHQzM3GxC772iDo7YRE-j9ZcisBuiQspNrujF8iMTI';
+        const RANGE = 'Data points!A1:ZZ10000';
+
+        const SLIDE_DURATIONS = {
+            default: 10000,
+            map: 15000,
+            feed: 15000
+        };
+
+        let currentSlide = 0;
+        let slideTimer = null;
+        let progressInterval = null;
+        let leafletMap = null;
+        let previousTotalShahadah = 0;
+
+        // ==================== Flags Map ====================
+        const flagMap = {
+            'KENYA': '🇰🇪', 'UGANDA': '🇺🇬', 'MALAWI': '🇲🇼', 'ZIMBABWE': '🇿🇼',
+            'SRI LANKA': '🇱🇰', 'ETHIOPIA': '🇪🇹', 'TANZANIA': '🇹🇿', 'MOZAMBIQUE': '🇲🇿',
+            'GHANA': '🇬🇭', 'THAILAND': '🇹🇭', 'TAMIL': '🇮🇳', 'INDIA MALAYALAM': '🇮🇳',
+            'GCC': '🇧🇭', 'GCC TAGALOG': '🇵🇭', 'SOUTH AFRICA': '🇿🇦', 'ZAMBIA': '🇿🇲',
+            'RWANDA': '🇷🇼', 'BURUNDI': '🇧🇮', 'NIGERIA': '🇳🇬', 'NEPAL': '🇳🇵',
+            'CUBA': '🇨🇺', 'GUATEMALA': '🇬🇹', 'ESWATINI': '🇸🇿', 'LESOTHO': '🇱🇸',
+            'TOGO': '🇹🇬', 'SOUTH SUDAN': '🇸🇸', 'PAPUA NEW GUINEA': '🇵🇬', 'FIJI': '🇫🇯',
+            'PHILIPPINES': '🇵🇭', 'CAMEROON': '🇨🇲', 'MALAYSIA': '🇲🇾', 'TIMOR LESTE': '🇹🇱',
+            'BOTSWANA': '🇧🇼', 'MAURITIUS': '🇲🇺', 'WORLDWIDE': '🌍'
+        };
+
+        // ==================== Country Coordinates ====================
+        const countryCoordinates = {
+            'KENYA': { lat: -1.28, lon: 36.82 }, 'UGANDA': { lat: 0.31, lon: 32.58 },
+            'MALAWI': { lat: -13.96, lon: 33.78 }, 'ZIMBABWE': { lat: -17.83, lon: 31.05 },
+            'SRI LANKA': { lat: 7.87, lon: 80.77 }, 'ETHIOPIA': { lat: 9.03, lon: 38.74 },
+            'TANZANIA': { lat: -6.37, lon: 34.89 }, 'MOZAMBIQUE': { lat: -18.67, lon: 35.53 },
+            'GHANA': { lat: 7.95, lon: -1.02 }, 'THAILAND': { lat: 15.87, lon: 100.99 },
+            'TAMIL': { lat: 11.12, lon: 78.65 }, 'INDIA MALAYALAM': { lat: 10.85, lon: 76.27 },
+            'GCC': { lat: 26.07, lon: 50.55 }, 'SOUTH AFRICA': { lat: -30.56, lon: 22.94 },
+            'ZAMBIA': { lat: -15.39, lon: 28.32 }, 'NIGERIA': { lat: 9.08, lon: 8.67 },
+            'NEPAL': { lat: 28.39, lon: 84.12 }, 'GUATEMALA': { lat: 14.63, lon: -90.51 },
+            'PHILIPPINES': { lat: 12.88, lon: 121.77 }, 'RWANDA': { lat: -1.94, lon: 29.87 }
+        };
+
+        const bahrainHQ = { lat: 26.07, lon: 50.55 };
+
+        // ==================== Data Storage ====================
+        let dashboardData = {
+            totalShahadahs: 0,
+            totalConversations: 0,
+            totalInterests: 0,
+            todayShahadahs: 0,
+            yesterdayShahadahs: 0,
+            weekShahadahs: 0,
+            monthShahadahs: 0,
+            countries: [],
+            monthlyTrend: [],
+            activeCountries: 0
+        };
+
+        // ==================== Initialize ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+            
+            createSlideDots();
+            
+            // Fetch data first, then start slideshow
+            fetchData().then(() => {
+                startSlideshow();
+                setTimeout(initLeafletMap, 1000);
+            });
+            
+            // Refresh data every 30 seconds
+            setInterval(fetchData, 30000);
+        });
+
+        // ==================== Fetch Data from Google Sheets ====================
+        async function fetchData() {
+            try {
+                const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${API_KEY}`;
+                const res = await fetch(url);
+                const json = await res.json();
+                const rows = json.values || [];
+
+                const countryStats = {};
+                let worldwide = {
+                    shahadah_year: 0, shahadah_month: 0, shahadah_week: 0,
+                    shahadah_today: 0, shahadah_yesterday: 0,
+                    interests_year: 0, conversations_year: 0, monthlyTrend: []
+                };
+
+                let currentCountry = null;
+                let countryName = null;
+                let isWorldwide = false;
+
+                for (let i = 0; i < rows.length; i++) {
+                    const row = rows[i];
+                    if (!row || row.length < 2) continue;
+
+                    if (row[1] === 'Days:') {
+                        countryName = row[0]?.trim() || '';
+                        currentCountry = countryName.toUpperCase();
+                        isWorldwide = currentCountry === 'WORLDWIDE';
+
+                        if (countryName && !isWorldwide) {
+                            countryStats[currentCountry] = {
+                                name: countryName,
+                                flag: flagMap[currentCountry] || '🌍',
+                                shahadah: 0, interests: 0, conversations: 0,
+                                week: 0, month: 0, today: 0, yesterday: 0
+                            };
+                        }
+                        continue;
+                    }
+
+                    if (!currentCountry) continue;
+                    const key = row[1]?.trim();
+
+                    // Daily Shahadah
+                    if (row[0] === 'Daily' && key === 'Shahdah') {
+                        const vals = row.slice(2).map(v => parseInt(v) || 0);
+                        if (vals.length >= 7) {
+                            const todayVal = vals[vals.length - 1];
+                            const yesterdayVal = vals[vals.length - 2];
+                            if (isWorldwide) {
+                                worldwide.shahadah_today = todayVal;
+                                worldwide.shahadah_yesterday = yesterdayVal;
+                            } else {
+                                countryStats[currentCountry].today = todayVal;
+                                countryStats[currentCountry].yesterday = yesterdayVal;
+                            }
+                        }
+                    }
+
+                    // Weekly Shahadah
+                    if (row[0] === 'Weekly' && key === 'Shahadah') {
+                        const weekVal = parseInt(row[row.length - 1]) || 0;
+                        if (isWorldwide) worldwide.shahadah_week = weekVal;
+                        else countryStats[currentCountry].week = weekVal;
+                    }
+
+                    // Monthly Shahadah
+                    if (row[0] === 'Monthly' && key === 'Shahadah') {
+                        const monthVal = parseInt(row[row.length - 1]) || 0;
+                        if (isWorldwide) {
+                            worldwide.shahadah_month = monthVal;
+                            const trendVals = row.slice(-7, -1).map(v => parseInt(v) || 0).filter(v => v > 0);
+                            worldwide.monthlyTrend = trendVals.length > 6 ? trendVals.slice(-6) : trendVals;
+                        } else {
+                            countryStats[currentCountry].month = monthVal;
+                        }
+                    }
+
+                    // Yearly Shahadah
+                    if (row[0] === 'Yearly' && key === 'Shahadah') {
+                        const yearVals = row.slice(2).map(v => parseInt(v) || 0);
+                        if (yearVals.length >= 3) {
+                            const total = yearVals.slice(-3).reduce((a, b) => a + b, 0);
+                            if (isWorldwide) worldwide.shahadah_year = total;
+                            else countryStats[currentCountry].shahadah = total;
+                        }
+                    }
+
+                    // Yearly Contacts
+                    if (row[0] === 'Yearly' && key === 'Contacts Given') {
+                        const yearVals = row.slice(2).map(v => parseInt(v) || 0);
+                        const total = yearVals.slice(-3).reduce((a, b) => a + b, 0);
+                        if (isWorldwide) worldwide.interests_year = total;
+                        else countryStats[currentCountry].interests = total;
+                    }
+
+                    // Yearly Messages
+                    if (row[0] === 'Yearly' && key === 'Messages') {
+                        const yearVals = row.slice(2).map(v => parseInt(v) || 0);
+                        const total = yearVals.slice(-3).reduce((a, b) => a + b, 0);
+                        if (isWorldwide) worldwide.conversations_year = total;
+                        else countryStats[currentCountry].conversations = total;
+                    }
+                }
+
+                // Process data
+                const allCountries = Object.values(countryStats).filter(c => c.shahadah > 0);
+                const sortedCountries = [...allCountries].sort((a, b) => b.shahadah - a.shahadah);
+
+                dashboardData = {
+                    totalShahadahs: worldwide.shahadah_year,
+                    totalConversations: worldwide.conversations_year,
+                    totalInterests: worldwide.interests_year,
+                    todayShahadahs: worldwide.shahadah_today,
+                    yesterdayShahadahs: worldwide.shahadah_yesterday,
+                    weekShahadahs: worldwide.shahadah_week,
+                    monthShahadahs: worldwide.shahadah_month,
+                    countries: sortedCountries,
+                    monthlyTrend: worldwide.monthlyTrend,
+                    activeCountries: allCountries.length
+                };
+
+                // Check for new shahadah
+                if (dashboardData.totalShahadahs > previousTotalShahadah && previousTotalShahadah > 0) {
+                    // Find which country got new shahadah (simplified - shows top country with today > 0)
+                    const countryWithNew = sortedCountries.find(c => c.today > 0);
+                    if (countryWithNew) {
+                        showShahadahAlert(countryWithNew.name, countryWithNew.flag);
+                    }
+                }
+                previousTotalShahadah = dashboardData.totalShahadahs;
+
+                // Update UI
+                updateUI();
+                
+                console.log('✅ Data loaded:', dashboardData.totalShahadahs, 'Shahadahs');
+
+            } catch (error) {
+                console.error('❌ Fetch error:', error);
+            }
+        }
+
+        // ==================== Update UI ====================
+        function updateUI() {
+            // Slide 1: Main Stats
+            document.getElementById('statConversations').textContent = formatLargeNumber(dashboardData.totalConversations);
+            document.getElementById('statShahadahs').textContent = dashboardData.totalShahadahs.toLocaleString();
+            document.getElementById('statDetails').textContent = dashboardData.totalInterests.toLocaleString();
+
+            // Slide 2: Map stats
+            document.querySelectorAll('.map-stat-box .info strong').forEach((el, i) => {
+                if (i === 0) el.textContent = dashboardData.activeCountries + '+';
+                if (i === 2) el.textContent = dashboardData.totalShahadahs.toLocaleString();
+            });
+
+            // Slide 3: Top Countries
+            updateTopCountries();
+
+            // Slide 4: Period Stats
+            document.getElementById('statToday').textContent = dashboardData.todayShahadahs;
+            document.querySelectorAll('.slide-today .today-card .period-value').forEach((el, i) => {
+                if (i === 0) el.textContent = dashboardData.todayShahadahs;
+                if (i === 1) el.textContent = dashboardData.yesterdayShahadahs;
+                if (i === 2) el.textContent = dashboardData.weekShahadahs;
+                if (i === 3) el.textContent = dashboardData.monthShahadahs;
+            });
+
+            // Slide 5: Journey
+            updateJourney();
+
+            // Slide 7: Live Feed
+            updateLiveFeed();
+
+            // Update map markers
+            if (leafletMap) updateMapMarkers();
+
+            // Update new slides
+            updateTrendChart();
+            updateSpotlight();
+            updateComparison();
+        }
+
+        function formatLargeNumber(num) {
+            if (!num || num === 0) return '0';
+            if (num >= 1000000) return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+            return num.toLocaleString();
+        }
+
+        function updateTopCountries() {
+            const grid = document.querySelector('.countries-grid');
+            if (!grid || dashboardData.countries.length === 0) return;
+
+            const top5 = dashboardData.countries.slice(0, 5);
+            grid.innerHTML = top5.map((country, i) => `
+                <div class="country-card ${i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : ''}">
+                    <div class="country-rank">${i + 1}</div>
+                    <div class="country-flag">${country.flag}</div>
+                    <div class="country-name">${country.name}</div>
+                    <div class="country-shahadahs">${country.shahadah.toLocaleString()}</div>
+                    <div class="country-label">Shahadahs</div>
+                </div>
+            `).join('');
+        }
+
+        function updateJourney() {
+            const convRate = dashboardData.totalConversations > 0 
+                ? ((dashboardData.totalInterests / dashboardData.totalConversations) * 100).toFixed(1) 
+                : '0';
+            const shahadahRate = dashboardData.totalInterests > 0 
+                ? ((dashboardData.totalShahadahs / dashboardData.totalInterests) * 100).toFixed(1) 
+                : '0';
+
+            document.querySelectorAll('.step-number').forEach((el, i) => {
+                if (i === 0) el.textContent = formatLargeNumber(dashboardData.totalConversations);
+                if (i === 1) el.textContent = formatLargeNumber(dashboardData.totalInterests);
+                if (i === 2) el.textContent = formatLargeNumber(dashboardData.totalShahadahs);
+            });
+
+            document.querySelectorAll('.conversion-rate').forEach((el, i) => {
+                if (i === 0) el.textContent = convRate + '%';
+                if (i === 1) el.textContent = shahadahRate + '%';
+            });
+        }
+
+        function updateLiveFeed() {
+            const feedList = document.getElementById('liveFeedList');
+            if (!feedList || dashboardData.countries.length === 0) return;
+
+            const recentCountries = dashboardData.countries.filter(c => c.today > 0 || c.yesterday > 0).slice(0, 5);
+            
+            if (recentCountries.length === 0) {
+                // Show top countries if no recent activity
+                recentCountries.push(...dashboardData.countries.slice(0, 5));
+            }
+
+            const times = ['Just now', '5 min ago', '15 min ago', '1 hour ago', '2 hours ago'];
+            const messages = [
+                'Alhamdulillah! Another soul guided to Islam',
+                'Allahu Akbar! Welcome to Islam',
+                'MashaAllah! A beautiful journey begins',
+                'SubhanAllah! Another guided heart',
+                'Alhamdulillah! The light of Islam spreads'
+            ];
+
+            let feedHTML = recentCountries.map((country, i) => `
+                <div class="feed-item ${i === 0 ? 'new' : ''}">
+                    <span class="feed-flag">${country.flag}</span>
+                    <div class="feed-content">
+                        <h4>New Shahadah from ${country.name}</h4>
+                        <p>${messages[i % messages.length]}</p>
+                    </div>
+                    <span class="feed-time">${times[i % times.length]}</span>
+                </div>
+            `).join('');
+
+            // Duplicate for seamless scroll
+            feedHTML += feedHTML;
+            feedList.innerHTML = feedHTML;
+        }
+
+        // ==================== Update New Slides ====================
+        let trendChart = null;
+        let spotlightIndex = 0;
+
+        function updateTrendChart() {
+            const ctx = document.getElementById('trendChart');
+            if (!ctx) return;
+
+            if (trendChart) trendChart.destroy();
+
+            const months = ['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const data = dashboardData.monthlyTrend.length > 0 
+                ? dashboardData.monthlyTrend 
+                : [245, 312, 389, 421, 456, 512];
+
+            trendChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Shahadahs',
+                        data: data,
+                        backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                        borderColor: '#10b981',
+                        borderWidth: 2,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            ticks: { color: '#94a3b8', font: { size: 14 } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#94a3b8', font: { size: 14 } }
+                        }
+                    }
+                }
+            });
+
+            // Update summary
+            const maxVal = Math.max(...data);
+            const avgVal = Math.round(data.reduce((a, b) => a + b, 0) / data.length);
+            document.getElementById('bestMonth').textContent = months[data.indexOf(maxVal)];
+            document.getElementById('avgMonth').textContent = avgVal;
+        }
+
+        function updateSpotlight() {
+            if (dashboardData.countries.length === 0) return;
+
+            // Rotate through top 5 countries
+            spotlightIndex = (spotlightIndex + 1) % Math.min(5, dashboardData.countries.length);
+            const country = dashboardData.countries[spotlightIndex];
+
+            document.getElementById('spotlightFlag').textContent = country.flag;
+            document.getElementById('spotlightName').textContent = country.name;
+            document.getElementById('spotlightRank').textContent = `#${spotlightIndex + 1} Top Performer`;
+            document.getElementById('spotlightShahadahs').textContent = country.shahadah.toLocaleString();
+            document.getElementById('spotlightDetails').textContent = (country.interests || 0).toLocaleString();
+            document.getElementById('spotlightConversations').textContent = formatLargeNumber(country.conversations || 0);
+            
+            const convRate = country.interests > 0 
+                ? ((country.shahadah / country.interests) * 100).toFixed(1) 
+                : '0';
+            document.getElementById('spotlightConversion').textContent = convRate + '%';
+        }
+
+        function updateComparison() {
+            document.getElementById('compareToday').textContent = dashboardData.todayShahadahs;
+            document.getElementById('compareYesterday').textContent = dashboardData.yesterdayShahadahs;
+            document.getElementById('compareWeek').textContent = dashboardData.weekShahadahs;
+            document.getElementById('compareMonth').textContent = dashboardData.monthShahadahs;
+
+            // Calculate changes
+            const todayChange = dashboardData.yesterdayShahadahs > 0 
+                ? Math.round(((dashboardData.todayShahadahs - dashboardData.yesterdayShahadahs) / dashboardData.yesterdayShahadahs) * 100)
+                : 0;
+
+            const todayChangeEl = document.getElementById('compareTodayChange');
+            if (todayChange > 0) {
+                todayChangeEl.textContent = `+${todayChange}% vs yesterday`;
+                todayChangeEl.className = 'compare-change positive';
+            } else if (todayChange < 0) {
+                todayChangeEl.textContent = `${todayChange}% vs yesterday`;
+                todayChangeEl.className = 'compare-change negative';
+            } else {
+                todayChangeEl.textContent = 'Same as yesterday';
+                todayChangeEl.className = 'compare-change';
+            }
+        }
+
+        // ==================== Date/Time ====================
+        function updateDateTime() {
+            const now = new Date();
+            document.getElementById('currentTime').textContent = 
+                now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            document.getElementById('currentDate').textContent = 
+                now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        // ==================== Slideshow ====================
+        function createSlideDots() {
+            const slides = document.querySelectorAll('.slide');
+            const dotsContainer = document.getElementById('slideDots');
+            
+            slides.forEach((_, index) => {
+                const dot = document.createElement('div');
+                dot.className = 'slide-dot' + (index === 0 ? ' active' : '');
+                dot.onclick = () => goToSlide(index);
+                dotsContainer.appendChild(dot);
+            });
+        }
+
+        function startSlideshow() {
+            showSlide(currentSlide);
+        }
+
+        function showSlide(index) {
+            const slides = document.querySelectorAll('.slide');
+            const dots = document.querySelectorAll('.slide-dot');
+            
+            if (slideTimer) clearTimeout(slideTimer);
+            if (progressInterval) clearInterval(progressInterval);
+            
+            slides.forEach((slide, i) => slide.classList.toggle('active', i === index));
+            dots.forEach((dot, i) => dot.classList.toggle('active', i === index));
+            
+            const duration = parseInt(slides[index].dataset.duration) * 1000 || SLIDE_DURATIONS.default;
+            startProgress(duration);
+            
+            slideTimer = setTimeout(() => {
+                currentSlide = (currentSlide + 1) % slides.length;
+                showSlide(currentSlide);
+            }, duration);
+            
+            if (index === 1 && !leafletMap) {
+                setTimeout(initLeafletMap, 500);
+            }
+        }
+
+        function goToSlide(index) {
+            currentSlide = index;
+            showSlide(index);
+        }
+
+        function startProgress(duration) {
+            const progressFill = document.getElementById('progressFill');
+            progressFill.style.width = '0%';
+            
+            const startTime = Date.now();
+            progressInterval = setInterval(() => {
+                const elapsed = Date.now() - startTime;
+                const progress = (elapsed / duration) * 100;
+                progressFill.style.width = Math.min(progress, 100) + '%';
+            }, 50);
+        }
+
+        // ==================== Leaflet Map ====================
+        function initLeafletMap() {
+            if (leafletMap) return;
+            
+            const mapContainer = document.getElementById('tvLeafletMap');
+            if (!mapContainer) return;
+            
+            leafletMap = L.map('tvLeafletMap', {
+                center: [10, 40],
+                zoom: 2.5,
+                minZoom: 2,
+                maxZoom: 6,
+                zoomControl: false,
+                attributionControl: false
+            });
+
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
+                subdomains: 'abcd',
+                maxZoom: 19
+            }).addTo(leafletMap);
+
+            updateMapMarkers();
+        }
+
+        function updateMapMarkers() {
+            if (!leafletMap) return;
+
+            // Clear existing markers
+            leafletMap.eachLayer((layer) => {
+                if (layer instanceof L.Marker || layer instanceof L.Polyline) {
+                    leafletMap.removeLayer(layer);
+                }
+            });
+
+            // Add HQ marker
+            const hqIcon = createMapIcon('#8b5cf6', 16, '🇧🇭', 'HQ');
+            L.marker([bahrainHQ.lat, bahrainHQ.lon], { icon: hqIcon }).addTo(leafletMap);
+
+            // Add country markers from real data
+            dashboardData.countries.forEach(country => {
+                const countryKey = country.name.toUpperCase();
+                const coords = countryCoordinates[countryKey];
+                
+                if (coords) {
+                    const style = getMarkerStyle(country.shahadah);
+                    const label = country.shahadah >= 1000 ? (country.shahadah / 1000).toFixed(1) + 'K' : country.shahadah;
+                    const icon = createMapIcon(style.color, style.size, country.flag, label);
+                    
+                    L.marker([coords.lat, coords.lon], { icon: icon }).addTo(leafletMap);
+                    
+                    L.polyline([[bahrainHQ.lat, bahrainHQ.lon], [coords.lat, coords.lon]], {
+                        color: '#10b981',
+                        weight: 1,
+                        opacity: 0.2,
+                        dashArray: '5, 10'
+                    }).addTo(leafletMap);
+                }
+            });
+        }
+
+        function getMarkerStyle(shahadahs) {
+            if (shahadahs >= 1000) return { color: '#10b981', size: 14 };
+            if (shahadahs >= 100) return { color: '#06b6d4', size: 12 };
+            if (shahadahs >= 10) return { color: '#f59e0b', size: 10 };
+            return { color: '#ec4899', size: 8 };
+        }
+
+        function createMapIcon(color, size, flag, label) {
+            const glow = `drop-shadow(0 0 8px ${color}) drop-shadow(0 0 16px ${color})`;
+            return L.divIcon({
+                className: 'custom-marker',
+                html: `
+                    <div style="display:flex;align-items:center;gap:8px;white-space:nowrap;">
+                        <div style="width:${size * 2}px;height:${size * 2}px;background:${color};border-radius:50%;filter:${glow};animation:pulse 2s infinite;border:2px solid rgba(255,255,255,0.3);"></div>
+                        <div style="background:rgba(0,0,0,0.8);padding:5px 10px;border-radius:8px;font-size:13px;font-weight:700;color:white;border:1px solid ${color}50;display:flex;align-items:center;gap:6px;">
+                            <span style="font-size:15px;">${flag}</span>
+                            <span style="color:${color};">${label}</span>
+                        </div>
+                    </div>
+                `,
+                iconSize: [120, size * 2],
+                iconAnchor: [size, size]
+            });
+        }
+
+        // ==================== Alert Functions ====================
+        function showShahadahAlert(country, flag) {
+            const alert = document.getElementById('shahadahAlert');
+            const alertText = document.getElementById('alertText');
+            alertText.textContent = `🎉 New Shahadah from ${country}! Allahu Akbar!`;
+            alert.classList.add('show');
+            
+            setTimeout(() => {
+                alert.classList.remove('show');
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
